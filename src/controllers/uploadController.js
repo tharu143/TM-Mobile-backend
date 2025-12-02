@@ -41,10 +41,25 @@ exports.serveImage = async (req, res) => {
         if (!mongoose.Types.ObjectId.isValid(id)) return res.status(400).json({ error: "Invalid image ID" });
 
         const bucket = getBucket();
-        const downloadStream = bucket.openDownloadStream(new mongoose.Types.ObjectId(id));
+        const _id = new mongoose.Types.ObjectId(id);
 
-        downloadStream.on('error', () => res.status(404).json({ error: "Image not found" }));
-        downloadStream.pipe(res);
+        const files = await bucket.find({ _id }).toArray();
+        if (!files || files.length === 0) {
+            return res.status(404).json({ error: "Image not found" });
+        }
+
+        const file = files[0];
+        res.setHeader('Content-Type', file.contentType || 'image/jpeg');
+
+        const downloadStream = bucket.openDownloadStream(_id);
+        const chunks = [];
+
+        downloadStream.on('data', (chunk) => chunks.push(chunk));
+        downloadStream.on('error', () => res.status(404).json({ error: "Error reading image" }));
+        downloadStream.on('end', () => {
+            const buffer = Buffer.concat(chunks);
+            res.send(buffer);
+        });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
