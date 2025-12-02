@@ -21,6 +21,7 @@ app.use('/api', require('./routes/serviceRoutes'));
 app.use('/api', require('./routes/dashboardRoutes'));
 app.use('/api', require('./routes/settingsRoutes'));
 app.use('/api', require('./routes/uploadRoutes'));
+app.use('/api', require('./routes/authRoutes'));
 
 // Root Route
 app.get('/', (req, res) => {
