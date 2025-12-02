@@ -26,7 +26,7 @@ exports.uploadImages = async (req, res) => {
             uploadedImages.push({
                 filename: file.originalname,
                 imageId: uploadStream.id,
-                path: `/api/images/${uploadStream.id}`
+                image_path: `/api/images/${uploadStream.id}`
             });
         }
         res.status(201).json({ message: "Images uploaded successfully", uploadedImages });
@@ -52,6 +52,33 @@ exports.serveImage = async (req, res) => {
         res.setHeader('Content-Type', file.contentType || 'image/jpeg');
 
         const downloadStream = bucket.openDownloadStream(_id);
+        const chunks = [];
+
+        downloadStream.on('data', (chunk) => chunks.push(chunk));
+        downloadStream.on('error', () => res.status(404).json({ error: "Error reading image" }));
+        downloadStream.on('end', () => {
+            const buffer = Buffer.concat(chunks);
+            res.send(buffer);
+        });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+exports.serveImageByName = async (req, res) => {
+    try {
+        const { filename } = req.params;
+        const bucket = getBucket();
+
+        const files = await bucket.find({ filename }).toArray();
+        if (!files || files.length === 0) {
+            return res.status(404).json({ error: "Image not found" });
+        }
+
+        const file = files[0];
+        res.setHeader('Content-Type', file.contentType || 'image/jpeg');
+
+        const downloadStream = bucket.openDownloadStream(file._id);
         const chunks = [];
 
         downloadStream.on('data', (chunk) => chunks.push(chunk));

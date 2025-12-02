@@ -13,7 +13,7 @@ exports.getProducts = async (req, res) => {
         const products = await Product.find({});
         const mapped = products.map(p => ({
             ...p.toObject(),
-            image: p.image_id ? `/api/images/${p.image_id}` : p.image_path ? `/Uploads/${p.image_path}` : null
+            image: p.image_id ? `/api/images/${p.image_id}` : p.image_path ? `/api/images/by-name/${p.image_path}` : null
         }));
         res.json(mapped);
     } catch (error) {
