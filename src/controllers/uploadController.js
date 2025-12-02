@@ -22,7 +22,13 @@ exports.uploadImages = async (req, res) => {
 
         for (const file of files) {
             const uploadStream = bucket.openUploadStream(file.originalname, { contentType: file.mimetype });
-            uploadStream.end(file.buffer);
+
+            await new Promise((resolve, reject) => {
+                uploadStream.on('finish', resolve);
+                uploadStream.on('error', reject);
+                uploadStream.end(file.buffer);
+            });
+
             uploadedImages.push({
                 filename: file.originalname,
                 imageId: uploadStream.id,
