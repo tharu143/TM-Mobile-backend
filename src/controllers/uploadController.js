@@ -4,6 +4,9 @@ const { Product, Mobile, Accessory, StockAddition } = require('../models');
 const xlsx = require('xlsx');
 
 const getBucket = () => {
+    if (mongoose.connection.readyState !== 1) {
+        throw new Error("Database not connected");
+    }
     const db = mongoose.connection.db;
     return new GridFSBucket(db);
 };
